@@ -5,7 +5,7 @@
 #include <stdint.h>
 
 typedef struct Meta {
-    uint16_t block_size;
+    uint32_t block_size;
     struct Meta* next;
 } Meta_t;
 

@@ -5,7 +5,7 @@
 uint8_t MY_HEAP[64000];
 
 int least_power_of_two(int value) {
-    uint16_t power_of_two = 1;
+    uint32_t power_of_two = 1;
     while (power_of_two < value) 
         power_of_two *= 2;   
     return power_of_two;
@@ -20,10 +20,10 @@ void init() {
 void *my_malloc(size_t size) {
     // 0. Mauvaise taille entrée par l'utilisateur
     if (size == 0) return NULL;
-    
+
     Meta_t *first = (Meta_t *) MY_HEAP;
     // 1. Calcul de la veritable a alloué
-    uint16_t new_size = least_power_of_two(size + sizeof(Meta_t));
+    uint32_t new_size = least_power_of_two(size + sizeof(Meta_t));
 
     // 2. Parcourir la mémoire à la recherche d'un bloc disponible
     Meta_t *current = first;
@@ -36,16 +36,21 @@ void *my_malloc(size_t size) {
     if (current == NULL) return NULL;
 
     // 4. Sinon, on met à jour la taille du bloc courant et on le marque comme occupé en forcant le bit de poids faible à 1.
-    uint16_t old_size = current->block_size & ~0x1;
-    current->block_size = new_size | 0x1;
+    uint32_t old_size = current->block_size & ~0x1;
 
     // 5. Créer la prochaine metadonée qui suivra le bloc alloué
-    if (new_size < old_size){
+    // Check si la mémoire restante permettra de pouvoir stockée une metadonnée
+    if (old_size - new_size > sizeof(Meta_t)){
         uint8_t *p = (uint8_t*) current;
         Meta_t* next = (Meta_t*) (p + new_size);
         next->block_size = old_size - new_size;
-        next->next = NULL;
+        next->next = current->next;
         current->next = next;
+        current->block_size = new_size | 0x1;
+    }
+    // Sinon, on alloue l'entiereté de la memoire restante
+    else {
+        current->block_size = old_size | 0x1;
     }
 
     // 6. Retourner un pointeur vers la mémoire demandée
