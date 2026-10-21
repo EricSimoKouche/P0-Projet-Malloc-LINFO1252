@@ -5,10 +5,11 @@
 #include <stdint.h>
 
 typedef struct Meta {
-    uint32_t block_size;
+    uint16_t block_size;
     struct Meta* next;
 } Meta_t;
 
+int least_power_of_two(int value);
 void init(void);
 void *my_malloc(size_t size);
 void my_free(void *pointer);
